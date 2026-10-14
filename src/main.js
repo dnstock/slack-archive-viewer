@@ -236,9 +236,7 @@ document.addEventListener("click", async (e) => {
   }
   if (b.id === "more") {
     limit += 150;
-    const scroll = $("content").scrollTop;
-    render();
-    $("content").scrollTop = scroll;
+    render({ prepend: true });
   }
   if (["reset", "clearEmpty"].includes(b.id)) reset();
   if (b.id === "help")

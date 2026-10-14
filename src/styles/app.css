@@ -343,7 +343,7 @@ main {
   flex: 1;
   overflow: auto;
   padding: 20px 0 30px;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 .empty {
   margin: 8vh auto;
@@ -825,4 +825,9 @@ dialog::backdrop {
 #closeNotice {
   flex-shrink: 0;
   padding: 5px 8px;
+}
+
+.loadOlder {
+  text-align: center;
+  padding: 0 20px 20px;
 }

@@ -44,7 +44,10 @@ export function createRenderer(getState, formatting) {
   function empty() {
     return `<section class="empty"><div class="emptyIcon">#</div><div class="eyebrow">SLACK ARCHIVE VIEWER</div><h2>Good conversations.<br>A longer memory.</h2><p>Bring your channel history back to life.<br>Import a JSON archive to browse messages,<br>follow threads, and find that one thing someone said.</p><button class="primary" data-import>↥ &nbsp; Import your first archive</button><button class="secondary" id="demoButton">Explore with a sample conversation →</button><p class="hint">Drop one or more .json files anywhere.<br>Your archives stay on this device.</p></section>`;
   }
-  function render() {
+  function render({ prepend = false } = {}) {
+    const content = $("content");
+    const previousTop = content.scrollTop;
+    const previousHeight = content.scrollHeight;
     const { archives, selected, view, thread, limit, data } = getState();
 
     $("archiveCount").textContent = archives.length;
@@ -129,33 +132,40 @@ export function createRenderer(getState, formatting) {
       // Each day owns its sticky header. Its section boundary lets the next
       // header push it away naturally, including when scrolling backwards.
       const groups = [];
-      for (const m of list.slice(0, limit)) {
+      for (const m of list.slice(-limit)) {
         const key = day(m.ts);
         if (groups.at(-1)?.day !== key) groups.push({ day: key, messages: [] });
         groups.at(-1).messages.push(m);
       }
       $("content").innerHTML =
-        groups
-          .map((group) => {
-            const label = date(group.messages[0].ts).toLocaleDateString(
-              "en-US",
-              {
-                timeZone: timezone(),
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              },
-            );
-            return `<section class="dateGroup" aria-label="${esc(label)}"><div class="dateDivider"><span>${esc(label)}</span></div>${group.messages.map((m) => message(m)).join("")}</section>`;
-          })
-          .join("") +
-          (list.length > limit
-            ? '<div style="text-align:center;padding:20px"><button class="outline" id="more">Load more messages</button></div>'
-            : "") ||
+        (list.length > limit
+          ? '<div class="loadOlder"><button class="outline" id="more">Load older messages</button></div>'
+          : "") +
+          groups
+            .map((group) => {
+              const label = date(group.messages[0].ts).toLocaleDateString(
+                "en-US",
+                {
+                  timeZone: timezone(),
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                },
+              );
+              return `<section class="dateGroup" aria-label="${esc(label)}"><div class="dateDivider"><span>${esc(label)}</span></div>${group.messages.map((m) => message(m)).join("")}</section>`;
+            })
+            .join("") ||
         '<div class="empty"><h2>No messages found</h2><p>Try a different search or clear the filters.</p><button class="outline" id="clearEmpty">Clear filters</button></div>';
     }
     renderThread();
+    if (view === "messages" || view === "threads") {
+      // Prepending preserves the reading position even when a day group grows
+      // or the final "load older" control disappears.
+      content.scrollTop = prepend
+        ? previousTop + content.scrollHeight - previousHeight
+        : content.scrollHeight;
+    }
   }
   function renderThread() {
     const { thread, data } = getState();

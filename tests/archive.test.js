@@ -92,6 +92,10 @@ test("page renderer can render About, files, and threads with an imported archiv
           innerHTML: "",
           textContent: "",
           hidden: false,
+          scrollTop: 0,
+          get scrollHeight() {
+            return (this.innerHTML.match(/<article/g) || []).length * 100;
+          },
         });
       return elements.get(id);
     },
@@ -124,6 +128,24 @@ test("page renderer can render About, files, and threads with an imported archiv
     renderer.render();
     assert.equal(elements.get("thread").hidden, false);
     assert.match(elements.get("thread").innerHTML, /2 archived replies/);
+    state.view = "messages";
+    state.thread = null;
+    state.limit = 2;
+    renderer.render();
+    const content = elements.get("content");
+    assert.ok(content.innerHTML.startsWith('<div class="loadOlder">'));
+    assert.match(content.innerHTML, /Load older messages/);
+    assert.ok(content.innerHTML.includes(sample.messages.at(-1).ts));
+    assert.ok(!content.innerHTML.includes(sample.messages[0].ts));
+    content.scrollTop = 20;
+    state.limit = 3;
+    renderer.render({ prepend: true });
+    assert.equal(content.scrollTop, 120);
+    assert.ok(content.innerHTML.includes(sample.messages[1].ts));
+    state.limit = 150;
+    renderer.render({ prepend: true });
+    assert.ok(!content.innerHTML.includes('id="more"'));
+    assert.ok(content.innerHTML.includes(sample.messages[0].ts));
   } finally {
     globalThis.document = previousDocument;
   }

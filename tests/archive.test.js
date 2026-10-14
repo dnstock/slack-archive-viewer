@@ -146,6 +146,21 @@ test("page renderer can render About, files, and threads with an imported archiv
     renderer.render({ prepend: true });
     assert.ok(!content.innerHTML.includes('id="more"'));
     assert.ok(content.innerHTML.includes(sample.messages[0].ts));
+    const { registerHosted, sourceKey } =
+      await import("../src/archive/hosted.js");
+    const shared = registerHosted(structuredClone(sample), "shared.json");
+    state.archives = [shared, sample];
+    state.selected = null;
+    renderer.render();
+    const sidebar = elements.get("archives").innerHTML;
+    assert.match(sidebar, /data-toggle-hosted="hosted:shared.json"/);
+    assert.equal((sidebar.match(/data-remove=/g) || []).length, 1);
+    state.archives = [shared];
+    state.disabled = new Set([sourceKey(shared)]);
+    state.data = mergeArchives([]);
+    renderer.render();
+    assert.match(content.innerHTML, /No archives enabled/);
+    assert.ok(!elements.get("archives").innerHTML.includes("data-remove="));
   } finally {
     globalThis.document = previousDocument;
   }

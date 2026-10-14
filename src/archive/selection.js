@@ -1,4 +1,5 @@
-import { channelKey, archiveKey } from "./model.js";
+import { sourceKey } from "./hosted.js";
+import { channelKey } from "./model.js";
 export function listChannels(archives, workspaceId) {
   const channels = new Map();
   for (const archive of [...archives].sort(
@@ -13,7 +14,7 @@ export function scopedArchives(archives, activeChannel, selected = null) {
   return archives.filter(
     (a) =>
       channelKey(a) === activeChannel &&
-      (!selected || archiveKey(a) === selected),
+      (!selected || sourceKey(a) === selected),
   );
 }
 export function resolveChannel(archives, activeChannel) {

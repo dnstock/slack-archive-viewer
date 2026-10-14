@@ -1,9 +1,11 @@
+import { enabledArchives } from "../archive/hosted.js";
 import { $, esc } from "./dom.js";
 import { channelKey } from "../archive/model.js";
 import { listChannels } from "../archive/selection.js";
 
 export function renderNavigation(state) {
-  const { archives, activeChannel } = state;
+  const { activeChannel } = state;
+  const archives = enabledArchives(state.archives, state.disabled);
   const allChannels = listChannels(archives);
   const current = allChannels.find((a) => channelKey(a) === activeChannel);
   const workspace = current?.workspace;
@@ -13,7 +15,7 @@ export function renderNavigation(state) {
   $("workspaceSelect").innerHTML =
     [...workspaces.values()]
       .map((w) => `<option value="${esc(w.id)}">${esc(w.name)}</option>`)
-      .join("") || "<option>No workspaces imported</option>";
+      .join("") || "<option>No enabled workspaces</option>";
   $("workspaceSelect").disabled = !archives.length;
   $("workspaceSelect").value = workspace?.id || "";
   $("workspaceName").textContent = workspace?.name || "Slack Archives";
@@ -32,14 +34,14 @@ export function renderNavigation(state) {
           `<button class="channel ${channelKey(a) === activeChannel ? "selected" : ""}" data-channel="${esc(channelKey(a))}"># &nbsp; ${esc(a.channel.name)}</button>`,
       )
       .join("") ||
-    '<p class="navigationHint">Import an archive to see its channels.</p>';
+    '<p class="navigationHint">Enable a shared archive or import JSON to see channels.</p>';
   $("channelSelect").innerHTML =
     channels
       .map(
         (a) =>
           `<option value="${esc(channelKey(a))}"># ${esc(a.channel.name)}</option>`,
       )
-      .join("") || "<option>No channels imported</option>";
+      .join("") || "<option>No enabled channels</option>";
   $("channelSelect").disabled = !channels.length;
   $("channelSelect").value = activeChannel || "";
   $("channelTitle").textContent = current

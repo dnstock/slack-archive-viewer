@@ -1,3 +1,12 @@
+import {
+  loadHostedArchives,
+  isHosted,
+  sourceKey,
+  enabledArchives,
+  browserArchives,
+  readDisabledArchives,
+  saveDisabledArchives,
+} from "./archive/hosted.js";
 import { createNotice } from "./ui/notice.js";
 import {
   scopedArchives,
@@ -28,15 +37,33 @@ let archives = [],
   db = null,
   data = mergeArchives([]),
   demo = false;
+const disabled = readDisabledArchives();
+let completeStartup;
+const ready = new Promise((resolve) => {
+  completeStartup = resolve;
+});
 const formatting = createFormatting(() => data);
 const { name } = formatting;
 const { render, renderThread } = createRenderer(
-  () => ({ archives, activeChannel, selected, view, thread, limit, data }),
+  () => ({
+    archives,
+    disabled,
+    activeChannel,
+    selected,
+    view,
+    thread,
+    limit,
+    data,
+  }),
   formatting,
 );
 const notice = createNotice($("notice"), $("noticeText"), $("closeNotice"));
 function chosen() {
-  return scopedArchives(archives, activeChannel, selected);
+  return scopedArchives(
+    enabledArchives(archives, disabled),
+    activeChannel,
+    selected,
+  );
 }
 function switchChannel(key) {
   activeChannel = key;
@@ -47,7 +74,10 @@ function switchChannel(key) {
   rebuild();
 }
 function rebuild() {
-  activeChannel = resolveChannel(archives, activeChannel);
+  activeChannel = resolveChannel(
+    enabledArchives(archives, disabled),
+    activeChannel,
+  );
   data = mergeArchives(chosen());
   const prev = $("person").value;
   const authors = new Map(
@@ -89,9 +119,10 @@ function download(a) {
 }
 function persist() {
   if (demo || !db) return Promise.resolve();
-  return saveArchives(db, archives);
+  return saveArchives(db, browserArchives(archives));
 }
 async function ingest(files) {
+  await ready;
   let good = 0,
     errors = [];
   for (const f of files) {
@@ -102,12 +133,16 @@ async function ingest(files) {
         archives = [];
         demo = false;
       }
-      const old = archives.find((x) => archiveKey(x) === archiveKey(a));
+      const old = browserArchives(archives).find(
+        (x) => archiveKey(x) === archiveKey(a),
+      );
       if (old && Date.parse(old.exported_at) > Date.parse(a.exported_at)) {
         errors.push(f.name + ": skipped older snapshot");
         continue;
       }
-      archives = archives.filter((x) => archiveKey(x) !== archiveKey(a));
+      archives = archives.filter(
+        (x) => isHosted(x) || archiveKey(x) !== archiveKey(a),
+      );
       archives.push(a);
       activeChannel = channelKey(a);
       good++;
@@ -137,6 +172,7 @@ async function ingest(files) {
   $("fileInput").value = "";
 }
 async function loadDemo() {
+  await ready;
   try {
     const a = validateArchive(
       await fetch("/archive/sample-conversation.json").then((response) => {
@@ -180,7 +216,7 @@ document.addEventListener("click", async (e) => {
     );
   }
   if (b.dataset.archiveMeta) {
-    const a = archives.find((x) => archiveKey(x) === b.dataset.archiveMeta);
+    const a = archives.find((x) => sourceKey(x) === b.dataset.archiveMeta);
     modal(
       "Original archive metadata",
       "<pre>" + esc(JSON.stringify(a, null, 2)) + "</pre>",
@@ -191,18 +227,21 @@ document.addEventListener("click", async (e) => {
   }
   if (b.dataset.archive) {
     selected = selected === b.dataset.archive ? null : b.dataset.archive;
-    const archive = archives.find((a) => archiveKey(a) === selected);
+    const archive = archives.find((a) => sourceKey(a) === selected);
     if (archive) activeChannel = channelKey(archive);
     thread = null;
     rebuild();
   }
   if (
     b.dataset.remove &&
+    archives.some((a) => sourceKey(a) === b.dataset.remove && !isHosted(a)) &&
     confirm(
       "Remove this archive from this browser? Your original JSON file is unaffected.",
     )
   ) {
-    archives = archives.filter((a) => archiveKey(a) !== b.dataset.remove);
+    archives = archives.filter(
+      (a) => isHosted(a) || sourceKey(a) !== b.dataset.remove,
+    );
     selected = null;
     thread = null;
     rebuild();
@@ -214,7 +253,7 @@ document.addEventListener("click", async (e) => {
     }
   }
   if (b.dataset.export)
-    download(archives.find((a) => archiveKey(a) === b.dataset.export));
+    download(archives.find((a) => sourceKey(a) === b.dataset.export));
   if (b.id === "demoButton") loadDemo();
   if (["closeModal"].includes(b.id)) $("modal").close();
   if (b.id === "closeThread") {
@@ -239,6 +278,8 @@ document.addEventListener("click", async (e) => {
     render({ prepend: true });
   }
   if (["reset", "clearEmpty"].includes(b.id)) reset();
+  if (b.id === "manageArchives")
+    modal("Manage archives", $("archives").innerHTML);
   if (b.id === "help")
     modal(
       "A consistent home for your archives",
@@ -246,7 +287,11 @@ document.addEventListener("click", async (e) => {
     );
 });
 $("workspaceSelect").addEventListener("change", (e) =>
-  switchChannel(channelKey(listChannels(archives, e.target.value)[0])),
+  switchChannel(
+    channelKey(
+      listChannels(enabledArchives(archives, disabled), e.target.value)[0],
+    ),
+  ),
 );
 $("channelSelect").addEventListener("change", (e) =>
   switchChannel(e.target.value),
@@ -288,14 +333,48 @@ document.addEventListener("drop", (e) => {
   $("dropOverlay").hidden = true;
   ingest([...e.dataTransfer.files]);
 });
-render();
-try {
-  db = await openArchiveDatabase();
-  archives = (await readArchives(db)).map(validateArchive);
+document.addEventListener("change", (e) => {
+  const id = e.target.dataset?.toggleHosted;
+  if (!id) return;
+  if (e.target.checked) disabled.delete(id);
+  else disabled.add(id);
+  if (selected === id) selected = null;
+  thread = null;
+  limit = 150;
   rebuild();
-} catch {
-  notice(
+  try {
+    saveDisabledArchives(disabled);
+  } catch {
+    notice(
+      "Archive preference could not be saved; this choice applies for this session.",
+    );
+  }
+});
+render();
+// Discover hosted files and browser imports independently: one unavailable source
+// must not prevent the other from loading.
+const startup = await Promise.allSettled([
+  loadHostedArchives(),
+  (async () => {
+    db = await openArchiveDatabase();
+    return (await readArchives(db)).map(validateArchive);
+  })(),
+]);
+const errors = [];
+if (startup[0].status === "fulfilled") {
+  archives.push(...startup[0].value.archives);
+  errors.push(...startup[0].value.errors);
+} else errors.push(startup[0].reason.message);
+if (startup[1].status === "fulfilled") archives.push(...startup[1].value);
+else {
+  errors.push(
     "Persistent browser storage is unavailable. Imports work for this session; keep your original files.",
   );
-  $("storageStatus").textContent = "Session only · keep your JSON files";
+  $("storageStatus").textContent =
+    "Session imports · shared archives from server";
 }
+archives.sort((a, b) => b.range.start_date.localeCompare(a.range.start_date));
+rebuild();
+if (errors.length) notice(errors.join("\n"));
+
+completeStartup();

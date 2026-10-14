@@ -1,12 +1,16 @@
-import { archiveKey } from "../archive/model.js";
+import { sourceKey, isHosted, enabledArchives } from "../archive/hosted.js";
 import { scopedArchives } from "../archive/selection.js";
 import { renderNavigation } from "./navigation.js";
 import { $, esc } from "./dom.js";
 export function createRenderer(getState, formatting) {
   const { timezone, date, day, time, glyph, name, link, rich } = formatting;
   function chosen() {
-    const { archives, activeChannel, selected } = getState();
-    return scopedArchives(archives, activeChannel, selected);
+    const { archives, disabled, activeChannel, selected } = getState();
+    return scopedArchives(
+      enabledArchives(archives, disabled),
+      activeChannel,
+      selected,
+    );
   }
   function passes(m) {
     const q = $("search").value.toLowerCase(),
@@ -48,7 +52,15 @@ export function createRenderer(getState, formatting) {
     const content = $("content");
     const previousTop = content.scrollTop;
     const previousHeight = content.scrollHeight;
-    const { archives, selected, view, thread, limit, data } = getState();
+    const {
+      archives,
+      disabled = new Set(),
+      selected,
+      view,
+      thread,
+      limit,
+      data,
+    } = getState();
 
     $("archiveCount").textContent = archives.length;
     renderNavigation(getState());
@@ -56,15 +68,23 @@ export function createRenderer(getState, formatting) {
       ? archives
           .map(
             (a) =>
-              `<div class="archiveEntry ${selected === archiveKey(a) ? "active" : ""}"><button class="range" data-archive="${esc(archiveKey(a))}">▣ &nbsp; ${esc(a.workspace.name)} / #${esc(a.channel.name)}<small>${esc(a.range.start_date)}</small><small>through ${esc(a.range.end_date)} · ${a.messages.length} messages · ${esc(a.coverage.status)}</small></button><button class="remove" data-remove="${esc(archiveKey(a))}" title="Remove local archive">×</button></div>`,
+              `<div class="archiveEntry ${selected === sourceKey(a) ? "active" : ""}"><button class="range" data-archive="${esc(sourceKey(a))}" ${disabled.has(sourceKey(a)) ? "disabled" : ""}>▣ &nbsp; ${esc(a.workspace.name)} / #${esc(a.channel.name)}<small>${esc(a.range.start_date)}</small><small>${isHosted(a) ? "Shared · " : "Browser import · "}through ${esc(a.range.end_date)} · ${a.messages.length} messages · ${esc(a.coverage.status)}</small></button>${isHosted(a) ? `<input class="archiveToggle" type="checkbox" data-toggle-hosted="${esc(sourceKey(a))}" ${disabled.has(sourceKey(a)) ? "" : "checked"} aria-label="Enable shared archive ${esc(a.workspace.name)} / ${esc(a.channel.name)} ${esc(a.range.start_date)}" title="Enable or disable shared archive">` : `<button class="remove" data-remove="${esc(sourceKey(a))}" title="Remove local archive">×</button>`}</div>`,
           )
           .join("")
       : '<p style="font-size:12px;color:#99859b;padding:0 9px;line-height:1.6">Your imported archives<br>will appear here.</p>';
+    if ($("modal").open && $("modalTitle").textContent === "Manage archives")
+      $("modalBody").innerHTML = $("archives").innerHTML;
     document
       .querySelectorAll(".tab")
       .forEach((b) => b.classList.toggle("selected", b.dataset.view === view));
     const filtered = data.messages.filter(passes);
     $("resultCount").textContent = filtered.length + " messages";
+    if (archives.length && !enabledArchives(archives, disabled).length) {
+      $("content").innerHTML =
+        '<section class="empty"><h2>No archives enabled</h2><p>Enable a shared archive in the sidebar to view its messages, or import an archive.</p><button class="primary" data-import>Import JSON</button></section>';
+      $("thread").hidden = true;
+      return;
+    }
     if (!archives.length) {
       $("content").innerHTML = empty();
       $("thread").hidden = true;
@@ -72,10 +92,10 @@ export function createRenderer(getState, formatting) {
     }
     if (view === "about") {
       $("content").innerHTML =
-        `<div class="infoPage"><div class="eyebrow">A RECORD, NOT A LIVE WORKSPACE</div><h2>Your channel, on your terms.</h2><p>Original JSON archives are stored in this browser’s IndexedDB. No imported data is uploaded. Clear browser data and these local copies will disappear; keep your exported files.</p><p>Dates and times use <b>${esc(timezone())}</b>. Overlapping messages in the selected workspace and channel are deduplicated by Slack timestamp; the newest export wins. Each original snapshot remains intact.</p><p><a href="/archive/archive-format.md" download="archive-format.md">Download format specification</a> · <a href="/archive/archive-template.json" download="archive-template.json">JSON template</a> · <a href="/archive/archive.schema.json" download="archive.schema.json">JSON Schema</a></p><h3>Archive coverage</h3>${chosen()
+        `<div class="infoPage"><div class="eyebrow">A RECORD, NOT A LIVE WORKSPACE</div><h2>Your channel, on your terms.</h2><p>Shared archives are loaded from the server’s archive folder. Checkboxes enable or disable them for this browser; they cannot be removed here. Manual imports are stored in this browser’s IndexedDB and are never uploaded. Clearing browser data removes imported copies and resets preferences; keep your exported files.</p><p>Dates and times use <b>${esc(timezone())}</b>. Overlapping messages in the selected workspace and channel are deduplicated by Slack timestamp; the newest export wins. Each original snapshot remains intact.</p><p><a href="/archive/archive-format.md" download="archive-format.md">Download format specification</a> · <a href="/archive/archive-template.json" download="archive-template.json">JSON template</a> · <a href="/archive/archive.schema.json" download="archive.schema.json">JSON Schema</a></p><h3>Archive coverage</h3>${chosen()
           .map(
             (a) =>
-              `<div class="attachment"><b>${esc(a.range.start_date)} → ${esc(a.range.end_date)} · ${esc(a.coverage.status)}</b><p>${esc(a.coverage.limitations.join("\n") || "No limitations reported by the exporter.")}</p><button class="outline" data-export="${esc(archiveKey(a))}">Download original JSON</button> <button data-archive-meta="${esc(archiveKey(a))}">Inspect all metadata</button></div>`,
+              `<div class="attachment"><b>${esc(a.range.start_date)} → ${esc(a.range.end_date)} · ${esc(a.coverage.status)}</b><p>${esc(a.coverage.limitations.join("\n") || "No limitations reported by the exporter.")}</p><button class="outline" data-export="${esc(sourceKey(a))}">Download original JSON</button> <button data-archive-meta="${esc(sourceKey(a))}">Inspect all metadata</button></div>`,
           )
           .join(
             "",

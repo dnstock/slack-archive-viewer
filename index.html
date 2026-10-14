@@ -72,7 +72,16 @@
           ><label>To <input id="to" type="date" /></label
           ><button id="reset">Reset</button><span id="resultCount"></span>
         </div>
-        <div id="notice" role="status" hidden></div>
+        <div id="notice" hidden>
+          <span id="noticeText" role="status"></span>
+          <button
+            id="closeNotice"
+            aria-label="Dismiss notification"
+            title="Dismiss notification"
+          >
+            ✕
+          </button>
+        </div>
         <div id="content" class="content"></div>
         <footer class="mainFooter">
           <span>▣ &nbsp; A home for your channel’s history.</span

@@ -1,3 +1,4 @@
+import { createNotice } from "./ui/notice.js";
 import {
   scopedArchives,
   resolveChannel,
@@ -33,10 +34,7 @@ const { render, renderThread } = createRenderer(
   () => ({ archives, activeChannel, selected, view, thread, limit, data }),
   formatting,
 );
-function notice(s) {
-  $("notice").textContent = s;
-  $("notice").hidden = !s;
-}
+const notice = createNotice($("notice"), $("noticeText"), $("closeNotice"));
 function chosen() {
   return scopedArchives(archives, activeChannel, selected);
 }

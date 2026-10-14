@@ -399,22 +399,34 @@ main {
   color: #999;
   margin-top: 30px;
 }
+.dateGroup {
+  display: flow-root;
+  position: relative;
+}
+/* The divider line scrolls with the day; only the date pill floats. */
+.dateGroup::before {
+  content: "";
+  position: absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #ddd;
+}
 .dateDivider {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 0;
+  justify-content: center;
   margin: 14px 0 22px;
   font-size: 12px;
   font-weight: bold;
 }
-.dateDivider:before,
-.dateDivider:after {
-  content: "";
-  height: 1px;
-  background: #ddd;
-  flex: 1;
-}
 .dateDivider span {
+  background: #fff;
+  box-shadow: 0 2px 4px #0000000d;
   padding: 8px 17px;
   border: 1px solid #ddd;
   border-radius: 25px;
@@ -586,6 +598,10 @@ main {
   font-size: 12px;
 }
 #notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
   padding: 10px 28px;
   background: #fff6db;
   font-size: 12px;
@@ -800,4 +816,13 @@ dialog::backdrop {
   .search kbd {
     display: none;
   }
+}
+
+#noticeText {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+#closeNotice {
+  flex-shrink: 0;
+  padding: 5px 8px;
 }

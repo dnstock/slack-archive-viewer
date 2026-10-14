@@ -1,0 +1,398 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Slack Archive v1.0.0",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "archive_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "exported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "workspace": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": true
+    },
+    "channel": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": true
+    },
+    "range": {
+      "type": "object",
+      "properties": {
+        "timezone": {
+          "type": "string"
+        },
+        "start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "end_exclusive": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "start_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "end_date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "required": [
+        "timezone",
+        "start",
+        "end_exclusive",
+        "start_date",
+        "end_date"
+      ],
+      "additionalProperties": true
+    },
+    "users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "real_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "avatar_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "raw": {}
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ts": {
+            "type": "string",
+            "pattern": "^\\d{1,12}\\.\\d{1,12}$"
+          },
+          "thread_ts": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{1,12}\\.\\d{1,12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bot_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "author_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": "string"
+          },
+          "subtype": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "blocks": {
+            "type": "array"
+          },
+          "attachments": {
+            "type": "array"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "reactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "users": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "count",
+                "users"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "reply_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "edited": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "permalink": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_context": {
+            "type": "boolean"
+          },
+          "raw": {
+            "type": [
+              "object",
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ts",
+          "thread_ts",
+          "user_id",
+          "bot_id",
+          "author_name",
+          "type",
+          "subtype",
+          "text",
+          "blocks",
+          "attachments",
+          "files",
+          "reactions",
+          "reply_count",
+          "edited",
+          "permalink",
+          "is_context",
+          "raw"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "events": {
+      "type": "array"
+    },
+    "raw_responses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "fetched_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "request": {
+            "type": "object"
+          },
+          "response": {}
+        },
+        "required": [
+          "tool",
+          "fetched_at",
+          "request",
+          "response"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "complete",
+            "partial",
+            "failed"
+          ]
+        },
+        "history_exhausted": {
+          "type": "boolean"
+        },
+        "threads_exhausted": {
+          "type": "boolean"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "errors": {
+          "type": "array"
+        },
+        "counts": {
+          "type": "object",
+          "properties": {
+            "messages": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "thread_replies": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "files": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "users": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "messages",
+            "thread_replies",
+            "files",
+            "users"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "status",
+        "history_exhausted",
+        "threads_exhausted",
+        "limitations",
+        "errors",
+        "counts"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "archive_id",
+    "exported_at",
+    "workspace",
+    "channel",
+    "range",
+    "users",
+    "messages",
+    "files",
+    "events",
+    "raw_responses",
+    "coverage"
+  ],
+  "additionalProperties": true
+}

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Voltron · Slack Archive</title>
+    <link rel="stylesheet" href="/src/styles/app.css" />
+  </head>
+  <body>
+    <header class="top">
+      <span class="brand">◷ &nbsp; Archive</span
+      ><label class="search"
+        >⌕
+        <input
+          id="search"
+          placeholder="Search Friends of Jibe"
+          aria-label="Search messages"
+        /><kbd>⌘ K</kbd></label
+      ><button id="help" title="Archive format">?</button>
+    </header>
+    <div class="shell">
+      <nav class="rail">
+        <div class="workspace">FJ</div>
+        <button class="active" id="home">⌂<small>Home</small></button
+        ><button id="threadsNav">☷<small>Threads</small></button
+        ><button id="filesNav">▤<small>Files</small></button
+        ><span class="railBottom">DH</span>
+      </nav>
+      <aside class="sidebar">
+        <h1>Friends of Jibe <span>⌄</span></h1>
+        <div class="sideSubtitle">YOUR CONVERSATIONS, PRESERVED</div>
+        <button class="sideItem" id="allNav">▣ &nbsp; All messages</button>
+        <div class="sectionLabel">⌄ &nbsp; Channels</div>
+        <button class="channel selected" id="channelNav">
+          # &nbsp; project-voltron <span id="channelCount">0</span>
+        </button>
+        <div class="sectionLabel archiveLabel">
+          ⌄ &nbsp; Imported archives <span id="archiveCount">0</span>
+        </div>
+        <div id="archives" class="archiveList"></div>
+        <div class="sideFooter">
+          <button class="importButton" id="importSide">
+            ＋ Import archives
+          </button>
+          <p>Stored on this browser only</p>
+        </div>
+      </aside>
+      <main>
+        <div class="channelHeader">
+          <div>
+            <h2># &nbsp; project-voltron</h2>
+            <div class="channelSub">
+              Friends of Jibe <span> / </span> Archive viewer
+            </div>
+          </div>
+          <button class="outline" id="importTop">↥ &nbsp; Import JSON</button>
+        </div>
+        <div class="tabs">
+          <button class="tab selected" data-view="messages">Messages</button
+          ><button class="tab" data-view="threads">Threads</button
+          ><button class="tab" data-view="files">Files</button
+          ><button class="tab" data-view="about">About</button
+          ><span class="readOnly">◉ &nbsp; Read only</span>
+        </div>
+        <div class="filters">
+          <select id="person" aria-label="Filter by author">
+            <option value="">All people</option></select
+          ><label>From <input id="from" type="date" /></label
+          ><label>To <input id="to" type="date" /></label
+          ><button id="reset">Reset</button><span id="resultCount"></span>
+        </div>
+        <div id="notice" role="status" hidden></div>
+        <div id="content" class="content"></div>
+        <footer class="mainFooter">
+          <span>▣ &nbsp; A home for your channel’s history.</span
+          ><span id="storageStatus">Local archive · no messages sent</span>
+        </footer>
+      </main>
+      <aside id="thread" class="thread" hidden></aside>
+    </div>
+    <input
+      id="fileInput"
+      type="file"
+      accept=".json,application/json"
+      multiple
+      hidden
+    />
+    <div id="dropOverlay" hidden>Drop JSON archives here</div>
+    <dialog id="modal">
+      <div class="modalHeader">
+        <h2 id="modalTitle"></h2>
+        <button id="closeModal" aria-label="Close">✕</button>
+      </div>
+      <div id="modalBody"></div>
+    </dialog>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

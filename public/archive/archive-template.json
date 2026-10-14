@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "archive_id": "T8PPK7S5V:C0BFZG5FBQD:2026-10-12:2026-10-19",
+  "exported_at": "2026-10-19T12:00:00Z",
+  "workspace": {
+    "id": "T8PPK7S5V",
+    "name": "Friends of Jibe",
+    "domain": "jibeforever",
+    "raw": null
+  },
+  "channel": {
+    "id": "C0BFZG5FBQD",
+    "name": "project-voltron",
+    "is_private": true,
+    "topic": null,
+    "purpose": null,
+    "members": [],
+    "raw": null
+  },
+  "range": {
+    "timezone": "America/New_York",
+    "start": "2026-10-12T00:00:00-04:00",
+    "end_exclusive": "2026-10-19T00:00:00-04:00",
+    "start_date": "2026-10-12",
+    "end_date": "2026-10-18"
+  },
+  "users": [],
+  "messages": [],
+  "files": [],
+  "events": [],
+  "raw_responses": [],
+  "coverage": {
+    "status": "partial",
+    "history_exhausted": false,
+    "threads_exhausted": false,
+    "limitations": ["Template only; not an exported archive."],
+    "errors": [],
+    "counts": {
+      "messages": 0,
+      "thread_replies": 0,
+      "files": 0,
+      "users": 0
+    }
+  }
+}

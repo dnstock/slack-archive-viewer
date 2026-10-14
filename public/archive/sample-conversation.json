@@ -1,0 +1,220 @@
+{
+  "schema_version": "1.0.0",
+  "archive_id": "sample-conversation",
+  "exported_at": "2026-10-19T12:00:00Z",
+  "workspace": {
+    "id": "T8PPK7S5V",
+    "name": "Friends of Jibe",
+    "domain": "jibeforever",
+    "raw": null
+  },
+  "channel": {
+    "id": "C0BFZG5FBQD",
+    "name": "project-voltron",
+    "is_private": true,
+    "topic": null,
+    "purpose": null,
+    "members": [],
+    "raw": null
+  },
+  "range": {
+    "timezone": "America/New_York",
+    "start": "2026-10-12T00:00:00-04:00",
+    "end_exclusive": "2026-10-19T00:00:00-04:00",
+    "start_date": "2026-10-12",
+    "end_date": "2026-10-18"
+  },
+  "users": [
+    {
+      "id": "SAMPLE_A",
+      "display_name": "Alex Chen",
+      "name": "alex",
+      "real_name": "Alex Chen",
+      "avatar_url": null,
+      "raw": null
+    },
+    {
+      "id": "SAMPLE_B",
+      "display_name": "Jamie Rivera",
+      "name": "jamie",
+      "real_name": "Jamie Rivera",
+      "avatar_url": null,
+      "raw": null
+    },
+    {
+      "id": "SAMPLE_C",
+      "display_name": "Sam Patel",
+      "name": "sam",
+      "real_name": "Sam Patel",
+      "avatar_url": null,
+      "raw": null
+    }
+  ],
+  "messages": [
+    {
+      "ts": "1791810000.000001",
+      "thread_ts": null,
+      "user_id": "SAMPLE_A",
+      "bot_id": null,
+      "author_name": null,
+      "type": "message",
+      "subtype": null,
+      "text": "Welcome to the sample archive \ud83d\udc4b\n\nThis is fictional content to show how your weekly exports will look. Import a real archive whenever you\u2019re ready.",
+      "blocks": [],
+      "attachments": [],
+      "files": [],
+      "reactions": [
+        {
+          "name": "wave",
+          "count": 3,
+          "users": null
+        },
+        {
+          "name": "rocket",
+          "count": 2,
+          "users": null
+        }
+      ],
+      "reply_count": 0,
+      "edited": null,
+      "permalink": null,
+      "is_context": false,
+      "raw": null
+    },
+    {
+      "ts": "1791810300.000002",
+      "thread_ts": null,
+      "user_id": "SAMPLE_B",
+      "bot_id": null,
+      "author_name": null,
+      "type": "message",
+      "subtype": null,
+      "text": "One place for the conversation, even after the week is over.\n\n*The next small step:* pick one idea and test it with someone who actually needs it.",
+      "blocks": [],
+      "attachments": [],
+      "files": [],
+      "reactions": [],
+      "reply_count": 2,
+      "edited": null,
+      "permalink": null,
+      "is_context": false,
+      "raw": null
+    },
+    {
+      "ts": "1791810500.000003",
+      "thread_ts": "1791810300.000002",
+      "user_id": "SAMPLE_C",
+      "bot_id": null,
+      "author_name": null,
+      "type": "message",
+      "subtype": null,
+      "text": "Agreed. What is the smallest version that would be useful on day one?",
+      "blocks": [],
+      "attachments": [],
+      "files": [],
+      "reactions": [],
+      "reply_count": 0,
+      "edited": null,
+      "permalink": null,
+      "is_context": false,
+      "raw": null
+    },
+    {
+      "ts": "1791810600.000004",
+      "thread_ts": "1791810300.000002",
+      "user_id": "SAMPLE_B",
+      "bot_id": null,
+      "author_name": null,
+      "type": "message",
+      "subtype": null,
+      "text": "A single workflow, a real user, and a clear way to tell whether it helped.",
+      "blocks": [],
+      "attachments": [],
+      "files": [],
+      "reactions": [
+        {
+          "name": "thumbsup",
+          "count": 2,
+          "users": ["SAMPLE_A", "SAMPLE_C"]
+        }
+      ],
+      "reply_count": 0,
+      "edited": null,
+      "permalink": null,
+      "is_context": false,
+      "raw": null
+    },
+    {
+      "ts": "1791811000.000005",
+      "thread_ts": null,
+      "user_id": "SAMPLE_C",
+      "bot_id": null,
+      "author_name": null,
+      "type": "message",
+      "subtype": null,
+      "text": "A few things to try in this viewer:\n\u2022 Search for `workflow`\n\u2022 Open the thread above\n\u2022 Click \u22ef to inspect a message\n\u2022 Import several weekly files at once",
+      "blocks": [],
+      "attachments": [],
+      "files": [],
+      "reactions": [],
+      "reply_count": 0,
+      "edited": null,
+      "permalink": null,
+      "is_context": false,
+      "raw": null
+    },
+    {
+      "ts": "1791897000.000006",
+      "thread_ts": null,
+      "user_id": "SAMPLE_A",
+      "bot_id": null,
+      "author_name": null,
+      "type": "message",
+      "subtype": null,
+      "text": "The archive preserves message text, timestamps, reactions, threads, and available metadata.\n\n> The completeness report tells you what the source could not provide.\n\nYou\u2019ll find it under *About*.",
+      "blocks": [],
+      "attachments": [],
+      "files": [
+        {
+          "id": "SAMPLE_FILE",
+          "name": "archive-format.md",
+          "title": "Example attachment (metadata only)",
+          "mimetype": "text/markdown",
+          "size": 2400,
+          "download_status": "sample \u2014 no file bytes"
+        }
+      ],
+      "reactions": [],
+      "reply_count": 0,
+      "edited": null,
+      "permalink": null,
+      "is_context": false,
+      "raw": null
+    }
+  ],
+  "files": [
+    {
+      "id": "SAMPLE_FILE",
+      "name": "archive-format.md",
+      "title": "Example attachment (metadata only)",
+      "mimetype": "text/markdown",
+      "size": 2400,
+      "download_status": "sample \u2014 no file bytes"
+    }
+  ],
+  "events": [],
+  "raw_responses": [],
+  "coverage": {
+    "status": "partial",
+    "history_exhausted": true,
+    "threads_exhausted": true,
+    "limitations": ["Fictional sample data for exploring the viewer."],
+    "errors": [],
+    "counts": {
+      "messages": 6,
+      "thread_replies": 2,
+      "files": 1,
+      "users": 3
+    }
+  }
+}

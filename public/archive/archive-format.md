@@ -1,7 +1,7 @@
 # Slack Archive v1.0.0
 
 UTF-8 JSON; timestamps in ISO 8601, except Slack ts/thread_ts values which MUST remain exact strings.
-Filename: project-voltron-slack-archive-YYYY-MM-DD_to_YYYY-MM-DD.json. Both filename dates are inclusive, in America/New_York. range.end_exclusive is the following Monday at local midnight. Never use a fixed 168-hour subtraction across DST.
+Filename: <channel-name>-slack-archive-YYYY-MM-DD_to_YYYY-MM-DD.json. Both filename dates are inclusive, in range.timezone. range.end_exclusive is the exclusive upper bound of the exported interval. Never use a fixed 168-hour subtraction across DST.
 
 The template supplies required top-level fields. Arrays remain arrays even when empty. Unknown values are null, never guessed. Additional properties are preserved for forward compatibility; major schema versions require an explicit migration.
 
@@ -22,8 +22,8 @@ Weekly snapshots cannot guarantee deleted messages, prior edit versions, reactio
 
 ## Merge semantics
 
-Archive identity is workspace ID + channel ID + range boundaries. Reimporting the same archive_id replaces that snapshot. Message identity is workspace ID + channel ID + exact ts. For overlaps, latest exported_at wins, independent of import order; original snapshots remain available. Thread replies link through thread_ts. A missing message is not a deletion event. Users/files merge by their Slack IDs within a workspace. Dates shown in New York time.
+Archive identity is workspace ID + channel ID + range boundaries. Reimporting the same archive_id replaces that snapshot. Message identity is workspace ID + channel ID + exact ts. For overlaps, latest exported_at wins, independent of import order; original snapshots remain available. Thread replies link through thread_ts. A missing message is not a deletion event. Users/files merge by their Slack IDs within a workspace. Dates are shown in the active channel’s newest archive range.timezone. Workspace and channel IDs and names are supplied by the JSON; no particular workspace or channel is required.
 
 ## Viewer
 
-Import one or multiple archives. Browser IndexedDB persists originals; content is never uploaded. External links are opened only when clicked; avatars/images are not fetched automatically. Search is literal and case-insensitive across text and author, with author/date filters, threaded context, files, and metadata inspection. Export each original archive from About. Remove an archive from the sidebar to delete its local copy. Schema/template downloads are available in About.
+Import one or multiple archives from any workspace or channel. Choose a workspace and channel to browse; search, threads, files, and coverage are scoped to the selected channel. Browser IndexedDB persists originals; content is never uploaded. External links are opened only when clicked; avatars/images are not fetched automatically. Search is literal and case-insensitive across text and author, with author/date filters, threaded context, files, and metadata inspection. Export each original archive from About. Remove an archive from the sidebar to delete its local copy. Schema/template downloads are available in About.

@@ -23,8 +23,23 @@ export function validateArchive(a) {
     !Number.isFinite(Date.parse(a.exported_at))
   )
     fail("Missing archive_id or valid exported_at.");
-  if (a.workspace?.id !== "T8PPK7S5V" || a.channel?.id !== "C0BFZG5FBQD")
-    fail("This viewer expects Friends of Jibe / #project-voltron.");
+  for (const field of ["workspace", "channel"]) {
+    if (
+      !a[field] ||
+      typeof a[field].id !== "string" ||
+      !a[field].id.trim() ||
+      typeof a[field].name !== "string" ||
+      !a[field].name.trim()
+    )
+      fail(field + " requires a non-empty id and name.");
+  }
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: a.range?.timezone });
+  } catch {
+    fail("Invalid archive timezone.");
+  }
+  if (typeof a.range?.timezone !== "string" || !a.range.timezone.trim())
+    fail("Missing archive timezone.");
   for (const k of ["users", "messages", "files", "events", "raw_responses"])
     if (!Array.isArray(a[k])) fail(k + " must be an array.");
   if (
@@ -80,15 +95,23 @@ export function validateArchive(a) {
       if (!x || typeof x.id !== "string") fail(key + " records require an id.");
   return a;
 }
+export const channelKey = (a) => JSON.stringify([a.workspace.id, a.channel.id]);
+export const archiveKey = (a) =>
+  JSON.stringify([a.workspace.id, a.channel.id, a.archive_id]);
+
+// Thread timestamps and Slack user/file IDs are resolved inside one channel scope.
 export function mergeArchives(archives) {
+  if (new Set(archives.map(channelKey)).size > 1)
+    throw Error("Select one workspace and channel before merging snapshots.");
   const messages = new Map(),
     users = new Map(),
     files = new Map();
-  for (const a of [...archives].sort(
+  const ordered = [...archives].sort(
     (a, b) =>
       Date.parse(a.exported_at) - Date.parse(b.exported_at) ||
       a.archive_id.localeCompare(b.archive_id),
-  )) {
+  );
+  for (const a of ordered) {
     for (const u of a.users) users.set(u.id, u);
     for (const f of a.files) files.set(f.id, f);
     for (const m of a.messages) messages.set(m.ts, m);
@@ -99,5 +122,10 @@ export function mergeArchives(archives) {
     ),
     users,
     files,
+    workspace: ordered.at(-1)?.workspace ?? null,
+    channel: ordered.at(-1)?.channel ?? null,
+    timezone:
+      ordered.at(-1)?.range.timezone ??
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
   };
 }

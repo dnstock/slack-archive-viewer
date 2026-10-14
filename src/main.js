@@ -1,4 +1,15 @@
-import { validateArchive, mergeArchives } from "./archive/model.js";
+import {
+  scopedArchives,
+  resolveChannel,
+  listChannels,
+  archiveFilename,
+} from "./archive/selection.js";
+import {
+  validateArchive,
+  mergeArchives,
+  channelKey,
+  archiveKey,
+} from "./archive/model.js";
 import {
   openArchiveDatabase,
   readArchives,
@@ -8,6 +19,7 @@ import { $, esc } from "./ui/dom.js";
 import { createFormatting } from "./ui/formatting.js";
 import { createRenderer } from "./ui/renderer.js";
 let archives = [],
+  activeChannel = null,
   selected = null,
   view = "messages",
   thread = null,
@@ -18,7 +30,7 @@ let archives = [],
 const formatting = createFormatting(() => data);
 const { name } = formatting;
 const { render, renderThread } = createRenderer(
-  () => ({ archives, selected, view, thread, limit, data }),
+  () => ({ archives, activeChannel, selected, view, thread, limit, data }),
   formatting,
 );
 function notice(s) {
@@ -26,11 +38,18 @@ function notice(s) {
   $("notice").hidden = !s;
 }
 function chosen() {
-  return selected
-    ? archives.filter((a) => a.archive_id === selected)
-    : archives;
+  return scopedArchives(archives, activeChannel, selected);
+}
+function switchChannel(key) {
+  activeChannel = key;
+  selected = null;
+  thread = null;
+  limit = 150;
+  for (const id of ["search", "person", "from", "to"]) $(id).value = "";
+  rebuild();
 }
 function rebuild() {
+  activeChannel = resolveChannel(archives, activeChannel);
   data = mergeArchives(chosen());
   const prev = $("person").value;
   const authors = new Map(
@@ -66,7 +85,7 @@ function download(a) {
     u = URL.createObjectURL(b),
     el = document.createElement("a");
   el.href = u;
-  el.download = `project-voltron-slack-archive-${a.range.start_date}_to_${a.range.end_date}.json`;
+  el.download = archiveFilename(a);
   el.click();
   setTimeout(() => URL.revokeObjectURL(u), 1000);
 }
@@ -85,18 +104,21 @@ async function ingest(files) {
         archives = [];
         demo = false;
       }
-      const old = archives.find((x) => x.archive_id === a.archive_id);
+      const old = archives.find((x) => archiveKey(x) === archiveKey(a));
       if (old && Date.parse(old.exported_at) > Date.parse(a.exported_at)) {
         errors.push(f.name + ": skipped older snapshot");
         continue;
       }
-      archives = archives.filter((x) => x.archive_id !== a.archive_id);
+      archives = archives.filter((x) => archiveKey(x) !== archiveKey(a));
       archives.push(a);
+      activeChannel = channelKey(a);
       good++;
     } catch (e) {
       errors.push(f.name + ": " + e.message);
     }
   }
+  if (good)
+    for (const id of ["search", "person", "from", "to"]) $(id).value = "";
   archives.sort((a, b) => b.range.start_date.localeCompare(a.range.start_date));
   selected = null;
   thread = null;
@@ -160,14 +182,19 @@ document.addEventListener("click", async (e) => {
     );
   }
   if (b.dataset.archiveMeta) {
-    const a = archives.find((x) => x.archive_id === b.dataset.archiveMeta);
+    const a = archives.find((x) => archiveKey(x) === b.dataset.archiveMeta);
     modal(
       "Original archive metadata",
       "<pre>" + esc(JSON.stringify(a, null, 2)) + "</pre>",
     );
   }
+  if (b.dataset.channel) {
+    switchChannel(b.dataset.channel);
+  }
   if (b.dataset.archive) {
     selected = selected === b.dataset.archive ? null : b.dataset.archive;
+    const archive = archives.find((a) => archiveKey(a) === selected);
+    if (archive) activeChannel = channelKey(archive);
     thread = null;
     rebuild();
   }
@@ -177,7 +204,7 @@ document.addEventListener("click", async (e) => {
       "Remove this archive from this browser? Your original JSON file is unaffected.",
     )
   ) {
-    archives = archives.filter((a) => a.archive_id !== b.dataset.remove);
+    archives = archives.filter((a) => archiveKey(a) !== b.dataset.remove);
     selected = null;
     thread = null;
     rebuild();
@@ -189,14 +216,14 @@ document.addEventListener("click", async (e) => {
     }
   }
   if (b.dataset.export)
-    download(archives.find((a) => a.archive_id === b.dataset.export));
+    download(archives.find((a) => archiveKey(a) === b.dataset.export));
   if (b.id === "demoButton") loadDemo();
   if (["closeModal"].includes(b.id)) $("modal").close();
   if (b.id === "closeThread") {
     thread = null;
     renderThread();
   }
-  if (["home", "allNav", "channelNav"].includes(b.id)) {
+  if (["home", "allNav"].includes(b.id)) {
     view = "messages";
     selected = null;
     rebuild();
@@ -222,6 +249,12 @@ document.addEventListener("click", async (e) => {
       '<p>Import version 1.0.0 JSON archives from your weekly export. Load multiple files together; overlapping messages are merged automatically.</p><p>Click a reply count to read the thread, or ⋯ to inspect original message metadata. Use About to inspect completeness reports and download original snapshots.</p><p><a href="/archive/archive-format.md" download="archive-format.md">Format specification</a> · <a href="/archive/archive-template.json" download="archive-template.json">Template</a> · <a href="/archive/archive.schema.json" download="archive.schema.json">JSON Schema</a></p>',
     );
 });
+$("workspaceSelect").addEventListener("change", (e) =>
+  switchChannel(channelKey(listChannels(archives, e.target.value)[0])),
+);
+$("channelSelect").addEventListener("change", (e) =>
+  switchChannel(e.target.value),
+);
 $("fileInput").addEventListener("change", (e) => ingest([...e.target.files]));
 for (const id of ["search", "person", "from", "to"])
   $(id).addEventListener("input", () => {

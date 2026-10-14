@@ -1,11 +1,12 @@
+import { archiveKey } from "../archive/model.js";
+import { scopedArchives } from "../archive/selection.js";
+import { renderNavigation } from "./navigation.js";
 import { $, esc } from "./dom.js";
 export function createRenderer(getState, formatting) {
-  const { TZ, date, day, time, glyph, name, link, rich } = formatting;
+  const { timezone, date, day, time, glyph, name, link, rich } = formatting;
   function chosen() {
-    const { archives, selected } = getState();
-    return selected
-      ? archives.filter((archive) => archive.archive_id === selected)
-      : archives;
+    const { archives, activeChannel, selected } = getState();
+    return scopedArchives(archives, activeChannel, selected);
   }
   function passes(m) {
     const q = $("search").value.toLowerCase(),
@@ -38,24 +39,24 @@ export function createRenderer(getState, formatting) {
       (x) => x.thread_ts === m.ts && x.ts !== m.ts,
     );
     const parent = m.thread_ts && m.thread_ts !== m.ts;
-    return `<article class="message"><div class="avatar" style="background:hsl(${h},25%,44%)">${esc(initials)}</div><div class="messageBody"><span class="author">${esc(n)}</span><span class="time" title="${esc(date(m.ts).toLocaleString("en-US", { timeZone: TZ }))} New York">${esc(time(m.ts))}</span>${m.edited ? '<span class="time">(edited)</span>' : ""}${m.is_context ? '<span class="time">context</span>' : ""}<div class="messageText">${rich(m.text)}</div>${m.attachments.map((a) => `<div class="attachment">${a.title ? (a.title_link ? link(a.title_link, a.title) : "<b>" + esc(a.title) + "</b>") : ""}${a.text ? "<div>" + rich(a.text) + "</div>" : !a.title ? esc(a.fallback || "Attachment metadata available in ⋯") : ""}${Array.isArray(a.fields) ? a.fields.map((f) => "<div><b>" + esc(f.title) + "</b> " + esc(f.value) + "</div>").join("") : ""}</div>`).join("")}${m.files.map(fileCard).join("")}${m.reactions.length ? '<div class="reactions">' + m.reactions.map((r) => `<span class="reaction" title="${esc((r.users || []).map((id) => name({ user_id: id })).join(", ") || r.name + " · reactors unavailable")}">${esc(glyph(r.name))} ${r.count}</span>`).join("") + "</div>" : ""}${!inThread && (replies.length || m.reply_count || parent) ? `<button class="replies" data-thread="${esc(parent ? m.thread_ts : m.ts)}">${parent ? "↳ View thread" : replies.length + " archived " + (replies.length === 1 ? "reply" : "replies") + (m.reply_count > replies.length ? " · " + m.reply_count + " in Slack" : "")} →</button>` : ""}</div><button class="metadataBtn" data-meta="${esc(m.ts)}" title="View message metadata">⋯</button></article>`;
+    return `<article class="message"><div class="avatar" style="background:hsl(${h},25%,44%)">${esc(initials)}</div><div class="messageBody"><span class="author">${esc(n)}</span><span class="time" title="${esc(date(m.ts).toLocaleString("en-US", { timeZone: timezone() }))} ${esc(timezone())}">${esc(time(m.ts))}</span>${m.edited ? '<span class="time">(edited)</span>' : ""}${m.is_context ? '<span class="time">context</span>' : ""}<div class="messageText">${rich(m.text)}</div>${m.attachments.map((a) => `<div class="attachment">${a.title ? (a.title_link ? link(a.title_link, a.title) : "<b>" + esc(a.title) + "</b>") : ""}${a.text ? "<div>" + rich(a.text) + "</div>" : !a.title ? esc(a.fallback || "Attachment metadata available in ⋯") : ""}${Array.isArray(a.fields) ? a.fields.map((f) => "<div><b>" + esc(f.title) + "</b> " + esc(f.value) + "</div>").join("") : ""}</div>`).join("")}${m.files.map(fileCard).join("")}${m.reactions.length ? '<div class="reactions">' + m.reactions.map((r) => `<span class="reaction" title="${esc((r.users || []).map((id) => name({ user_id: id })).join(", ") || r.name + " · reactors unavailable")}">${esc(glyph(r.name))} ${r.count}</span>`).join("") + "</div>" : ""}${!inThread && (replies.length || m.reply_count || parent) ? `<button class="replies" data-thread="${esc(parent ? m.thread_ts : m.ts)}">${parent ? "↳ View thread" : replies.length + " archived " + (replies.length === 1 ? "reply" : "replies") + (m.reply_count > replies.length ? " · " + m.reply_count + " in Slack" : "")} →</button>` : ""}</div><button class="metadataBtn" data-meta="${esc(m.ts)}" title="View message metadata">⋯</button></article>`;
   }
   function empty() {
-    return `<section class="empty"><div class="emptyIcon">#</div><div class="eyebrow">THE PROJECT VOLTRON ARCHIVE</div><h2>Good conversations.<br>A longer memory.</h2><p>Bring your channel history back to life.<br>Import a weekly JSON archive to browse messages,<br>follow threads, and find that one thing someone said.</p><button class="primary" data-import>↥ &nbsp; Import your first archive</button><button class="secondary" id="demoButton">Explore with a sample conversation →</button><p class="hint">Drop one or more .json files anywhere.<br>Your archives stay on this device.</p></section>`;
+    return `<section class="empty"><div class="emptyIcon">#</div><div class="eyebrow">SLACK ARCHIVE VIEWER</div><h2>Good conversations.<br>A longer memory.</h2><p>Bring your channel history back to life.<br>Import a JSON archive to browse messages,<br>follow threads, and find that one thing someone said.</p><button class="primary" data-import>↥ &nbsp; Import your first archive</button><button class="secondary" id="demoButton">Explore with a sample conversation →</button><p class="hint">Drop one or more .json files anywhere.<br>Your archives stay on this device.</p></section>`;
   }
   function render() {
     const { archives, selected, view, thread, limit, data } = getState();
 
     $("archiveCount").textContent = archives.length;
-    $("channelCount").textContent = data.messages.length;
+    renderNavigation(getState());
     $("archives").innerHTML = archives.length
       ? archives
           .map(
             (a) =>
-              `<div class="archiveEntry ${selected === a.archive_id ? "active" : ""}"><button class="range" data-archive="${esc(a.archive_id)}">▣ &nbsp; ${esc(a.range.start_date)}<small>through ${esc(a.range.end_date)} · ${a.messages.length} messages · ${esc(a.coverage.status)}</small></button><button class="remove" data-remove="${esc(a.archive_id)}" title="Remove local archive">×</button></div>`,
+              `<div class="archiveEntry ${selected === archiveKey(a) ? "active" : ""}"><button class="range" data-archive="${esc(archiveKey(a))}">▣ &nbsp; ${esc(a.workspace.name)} / #${esc(a.channel.name)}<small>${esc(a.range.start_date)}</small><small>through ${esc(a.range.end_date)} · ${a.messages.length} messages · ${esc(a.coverage.status)}</small></button><button class="remove" data-remove="${esc(archiveKey(a))}" title="Remove local archive">×</button></div>`,
           )
           .join("")
-      : '<p style="font-size:12px;color:#99859b;padding:0 9px;line-height:1.6">Your weekly archives<br>will appear here.</p>';
+      : '<p style="font-size:12px;color:#99859b;padding:0 9px;line-height:1.6">Your imported archives<br>will appear here.</p>';
     document
       .querySelectorAll(".tab")
       .forEach((b) => b.classList.toggle("selected", b.dataset.view === view));
@@ -68,10 +69,10 @@ export function createRenderer(getState, formatting) {
     }
     if (view === "about") {
       $("content").innerHTML =
-        `<div class="infoPage"><div class="eyebrow">A RECORD, NOT A LIVE WORKSPACE</div><h2>Your channel, on your terms.</h2><p>Original JSON archives are stored in this browser’s IndexedDB. No imported data is uploaded. Clear browser data and these local copies will disappear; keep your exported files.</p><p>Dates and times use <b>America/New_York</b>. Overlapping messages are deduplicated by Slack timestamp; the newest export wins. Each original snapshot remains intact.</p><p><a href="/archive/archive-format.md" download="archive-format.md">Download format specification</a> · <a href="/archive/archive-template.json" download="archive-template.json">JSON template</a> · <a href="/archive/archive.schema.json" download="archive.schema.json">JSON Schema</a></p><h3>Archive coverage</h3>${chosen()
+        `<div class="infoPage"><div class="eyebrow">A RECORD, NOT A LIVE WORKSPACE</div><h2>Your channel, on your terms.</h2><p>Original JSON archives are stored in this browser’s IndexedDB. No imported data is uploaded. Clear browser data and these local copies will disappear; keep your exported files.</p><p>Dates and times use <b>${esc(timezone())}</b>. Overlapping messages in the selected workspace and channel are deduplicated by Slack timestamp; the newest export wins. Each original snapshot remains intact.</p><p><a href="/archive/archive-format.md" download="archive-format.md">Download format specification</a> · <a href="/archive/archive-template.json" download="archive-template.json">JSON template</a> · <a href="/archive/archive.schema.json" download="archive.schema.json">JSON Schema</a></p><h3>Archive coverage</h3>${chosen()
           .map(
             (a) =>
-              `<div class="attachment"><b>${esc(a.range.start_date)} → ${esc(a.range.end_date)} · ${esc(a.coverage.status)}</b><p>${esc(a.coverage.limitations.join("\n") || "No limitations reported by the exporter.")}</p><button class="outline" data-export="${esc(a.archive_id)}">Download original JSON</button> <button data-archive-meta="${esc(a.archive_id)}">Inspect all metadata</button></div>`,
+              `<div class="attachment"><b>${esc(a.range.start_date)} → ${esc(a.range.end_date)} · ${esc(a.coverage.status)}</b><p>${esc(a.coverage.limitations.join("\n") || "No limitations reported by the exporter.")}</p><button class="outline" data-export="${esc(archiveKey(a))}">Download original JSON</button> <button data-archive-meta="${esc(archiveKey(a))}">Inspect all metadata</button></div>`,
           )
           .join(
             "",
@@ -137,7 +138,7 @@ export function createRenderer(getState, formatting) {
                 '<div class="dateDivider"><span>' +
                 esc(
                   date(m.ts).toLocaleDateString("en-US", {
-                    timeZone: TZ,
+                    timeZone: timezone(),
                     weekday: "long",
                     month: "long",
                     day: "numeric",
@@ -168,7 +169,7 @@ export function createRenderer(getState, formatting) {
       );
     $("thread").hidden = false;
     $("thread").innerHTML =
-      '<div class="threadHeader"><b>Thread <span class="time"># project-voltron</span></b><button id="closeThread" aria-label="Close thread">✕</button></div>' +
+      `<div class="threadHeader"><b>Thread <span class="time"># ${esc(data.channel?.name || "Channel")}</span></b><button id="closeThread" aria-label="Close thread">✕</button></div>` +
       (root
         ? message(root, true)
         : '<p class="threadHint">Parent message was not included in these archives.</p>') +

@@ -1,10 +1,29 @@
 // Keep this database name and store stable so existing imports survive refactors.
 export async function openArchiveDatabase() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("voltron-archive-v1", 1);
-    request.onupgradeneeded = () =>
-      request.result.createObjectStore("archives", { keyPath: "archive_id" });
-    request.onsuccess = () => resolve(request.result);
+    const request = indexedDB.open("voltron-archive-v1", 2);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      const createStore = () =>
+        db.createObjectStore("archives", {
+          keyPath: ["workspace.id", "channel.id", "archive_id"],
+        });
+      if (!db.objectStoreNames.contains("archives")) {
+        createStore();
+        return;
+      }
+      // Upgrade the original archive-id-only key without losing saved snapshots.
+      const read = request.transaction.objectStore("archives").getAll();
+      read.onsuccess = () => {
+        db.deleteObjectStore("archives");
+        const store = createStore();
+        read.result.forEach((archive) => store.put(archive));
+      };
+    };
+    request.onsuccess = () => {
+      request.result.onversionchange = () => request.result.close();
+      resolve(request.result);
+    };
     request.onerror = () => reject(request.error);
   });
 }

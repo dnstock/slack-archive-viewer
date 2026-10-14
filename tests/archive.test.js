@@ -5,6 +5,8 @@ import {
   validateArchive,
   mergeArchives,
   timestampCompare,
+  channelKey,
+  archiveKey,
 } from "../src/archive/model.js";
 import { createFormatting } from "../src/ui/formatting.js";
 const sample = JSON.parse(
@@ -100,7 +102,8 @@ test("page renderer can render About, files, and threads with an imported archiv
   try {
     const state = {
       archives: [sample],
-      selected: sample.archive_id,
+      selected: archiveKey(sample),
+      activeChannel: channelKey(sample),
       view: "about",
       thread: null,
       limit: 150,
@@ -124,4 +127,76 @@ test("page renderer can render About, files, and threads with an imported archiv
   } finally {
     globalThis.document = previousDocument;
   }
+});
+
+test("any workspace/channel is valid, while missing identity and timezone are rejected", () => {
+  const other = structuredClone(sample);
+  other.workspace = { id: "TOTHER", name: "Another workspace" };
+  other.channel = { id: "COTHER", name: "support" };
+  other.range.timezone = "Europe/London";
+  assert.equal(validateArchive(other), other);
+  assert.throws(
+    () => validateArchive({ ...other, workspace: { id: "", name: "bad" } }),
+    /workspace/,
+  );
+  assert.throws(
+    () => validateArchive({ ...other, channel: { id: "COTHER" } }),
+    /channel/,
+  );
+  assert.throws(
+    () =>
+      validateArchive({
+        ...other,
+        range: { ...other.range, timezone: "invalid/zone" },
+      }),
+    /timezone/,
+  );
+});
+
+test("matching archive IDs, message timestamps, user IDs, and file IDs stay isolated by channel/workspace", async () => {
+  const { scopedArchives, resolveChannel, listChannels, archiveFilename } =
+    await import("../src/archive/selection.js");
+  const otherChannel = structuredClone(sample);
+  otherChannel.channel = { id: "COTHER", name: "support" };
+  otherChannel.messages[0].text = "Support only";
+  const otherWorkspace = structuredClone(otherChannel);
+  otherWorkspace.workspace = { id: "TOTHER", name: "Another workspace" };
+  otherWorkspace.messages[0].text = "Other workspace only";
+  otherWorkspace.users[0].display_name = "Another person";
+  otherWorkspace.files[0].title = "Another file";
+  const archives = [sample, otherChannel, otherWorkspace];
+  assert.equal(new Set(archives.map(archiveKey)).size, 3);
+  assert.throws(
+    () => mergeArchives(archives),
+    /Select one workspace and channel/,
+  );
+  for (const a of archives) {
+    const scope = scopedArchives(archives, channelKey(a));
+    assert.deepEqual(scope, [a]);
+    const merged = mergeArchives(scope);
+    assert.equal(merged.messages[0].text, a.messages[0].text);
+    assert.equal(
+      merged.users.get(a.users[0].id).display_name,
+      a.users[0].display_name,
+    );
+    assert.equal(merged.files.get(a.files[0].id).title, a.files[0].title);
+  }
+  assert.equal(listChannels(archives, sample.workspace.id).length, 2);
+  assert.equal(resolveChannel(archives, "removed"), channelKey(sample));
+  assert.match(archiveFilename(otherChannel), /^support-slack-archive-/);
+});
+
+test("latest export drives timezone, names, and date filters regardless of import order", () => {
+  const newer = structuredClone(sample);
+  newer.archive_id = "renamed";
+  newer.exported_at = "2026-10-20T12:00:00Z";
+  newer.workspace.name = "Renamed workspace";
+  newer.channel.name = "renamed-channel";
+  newer.range.timezone = "Asia/Tokyo";
+  const data = mergeArchives([newer, sample]);
+  assert.equal(data.workspace.name, "Renamed workspace");
+  assert.equal(data.channel.name, "renamed-channel");
+  const formatting = createFormatting(() => data);
+  assert.equal(formatting.timezone(), "Asia/Tokyo");
+  assert.equal(formatting.day("1791849600.000001"), "2026-10-13");
 });

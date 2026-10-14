@@ -3,37 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Voltron · Slack Archive</title>
+    <title>Slack Archive Viewer</title>
     <link rel="stylesheet" href="/src/styles/app.css" />
   </head>
   <body>
     <header class="top">
-      <span class="brand">◷ &nbsp; Archive</span
+      <select id="workspaceSelect" aria-label="Select workspace">
+        <option>No workspaces imported</option></select
       ><label class="search"
         >⌕
         <input
           id="search"
-          placeholder="Search Friends of Jibe"
+          placeholder="Search archived messages"
           aria-label="Search messages"
         /><kbd>⌘ K</kbd></label
       ><button id="help" title="Archive format">?</button>
     </header>
     <div class="shell">
       <nav class="rail">
-        <div class="workspace">FJ</div>
+        <div class="workspace" id="workspaceBadge">SA</div>
         <button class="active" id="home">⌂<small>Home</small></button
         ><button id="threadsNav">☷<small>Threads</small></button
         ><button id="filesNav">▤<small>Files</small></button
-        ><span class="railBottom">DH</span>
+        ><span class="railBottom" title="Read-only archives">▣</span>
       </nav>
       <aside class="sidebar">
-        <h1>Friends of Jibe <span>⌄</span></h1>
+        <h1 id="workspaceName">Slack Archives</h1>
+
         <div class="sideSubtitle">YOUR CONVERSATIONS, PRESERVED</div>
         <button class="sideItem" id="allNav">▣ &nbsp; All messages</button>
         <div class="sectionLabel">⌄ &nbsp; Channels</div>
-        <button class="channel selected" id="channelNav">
-          # &nbsp; project-voltron <span id="channelCount">0</span>
-        </button>
+        <div id="channels" class="channelList"></div>
         <div class="sectionLabel archiveLabel">
           ⌄ &nbsp; Imported archives <span id="archiveCount">0</span>
         </div>
@@ -48,9 +48,12 @@
       <main>
         <div class="channelHeader">
           <div>
-            <h2># &nbsp; project-voltron</h2>
+            <h2 id="channelTitle">Slack Archive Viewer</h2>
+            <select id="channelSelect" aria-label="Select channel">
+              <option>No channels imported</option>
+            </select>
             <div class="channelSub">
-              Friends of Jibe <span> / </span> Archive viewer
+              <span id="channelWorkspace">Import JSON archives to begin</span>
             </div>
           </div>
           <button class="outline" id="importTop">↥ &nbsp; Import JSON</button>

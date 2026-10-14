@@ -3,14 +3,14 @@
   "archive_id": "sample-conversation",
   "exported_at": "2026-10-19T12:00:00Z",
   "workspace": {
-    "id": "T8PPK7S5V",
-    "name": "Friends of Jibe",
-    "domain": "jibeforever",
+    "id": "TEXAMPLE",
+    "name": "Example Workspace",
+    "domain": "example",
     "raw": null
   },
   "channel": {
-    "id": "C0BFZG5FBQD",
-    "name": "project-voltron",
+    "id": "CEXAMPLE",
+    "name": "general",
     "is_private": true,
     "topic": null,
     "purpose": null,

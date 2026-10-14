@@ -1,17 +1,18 @@
 import { esc } from "./dom.js";
 export function createFormatting(getData) {
-  const TZ = "America/New_York",
-    date = (ts) => new Date(Number(ts) * 1000),
+  const timezone = () =>
+    getData().timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const date = (ts) => new Date(Number(ts) * 1000),
     day = (ts) =>
       new Intl.DateTimeFormat("en-CA", {
-        timeZone: TZ,
+        timeZone: timezone(),
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
       }).format(date(ts));
   const time = (ts) =>
     date(ts).toLocaleTimeString("en-US", {
-      timeZone: TZ,
+      timeZone: timezone(),
       hour: "numeric",
       minute: "2-digit",
     });
@@ -88,5 +89,5 @@ export function createFormatting(getData) {
       .replace(/^&gt; (.+)$/gm, "<blockquote>$1</blockquote>");
     return s.replace(/\u0000(\d+)\u0000/g, (_, i) => tokens[Number(i)]);
   }
-  return { TZ, date, day, time, glyph, name, safeURL, link, rich };
+  return { timezone, date, day, time, glyph, name, safeURL, link, rich };
 }
